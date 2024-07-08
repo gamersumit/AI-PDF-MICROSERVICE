@@ -22,7 +22,7 @@ class PDFService:
             pdf.append_images_to_pdf([image])
         
         pdf = pdf.save()
-        return MediaUtils.UploadMediaToCloud(pdf, 'pdf', title)
+        return MediaUtils.UploadMediaToCloud(pdf, 'pdf', title.strip())
     
     @staticmethod
     def send_pdf_via_email(pdf_link, emails = ['devinnow8@gmail.com']):
