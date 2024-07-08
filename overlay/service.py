@@ -46,17 +46,12 @@ class PDFService:
         message.send()
 
 
-class FontColorForBackgroundDetectorService():
-    def __init__(self, image_url):
-        self.img = self.download_image(image_url)
+class FontColorForBackgroundDetectorService:
+    def __init__(self, image):
+        self.img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)  # Convert PIL image to NumPy array
         self.manual_count = {}
-        self.h, self.w, self.channels = self.img.shape  # Corrected the order of height and width
+        self.h, self.w, self.channels = self.img.shape
         self.total_pixels = self.h * self.w
-
-    def download_image(self, url):
-        response = requests.get(url)
-        img = Image.open(BytesIO(response.content))
-        return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
     def count(self):
         for y in range(0, self.h):
@@ -68,9 +63,7 @@ class FontColorForBackgroundDetectorService():
                     self.manual_count[BGR] = 1
 
     def average_colour(self):
-        red = 0
-        green = 0
-        blue = 0
+        red, green, blue = 0, 0, 0
         sample = 10
         for top in range(0, sample):
             blue += self.number_counter[top][0][0]
@@ -80,10 +73,9 @@ class FontColorForBackgroundDetectorService():
         average_red = red / sample
         average_green = green / sample
         average_blue = blue / sample
-        print("Average RGB for top ten is: (", average_red,
-              ", ", average_green, ", ", average_blue, ")")
+        print("Average RGB for top ten is: (", average_red, ", ", average_green, ", ", average_blue, ")")
         
-        return (average_red,average_green, average_blue)
+        return (average_red, average_green, average_blue)
 
     def twenty_most_common(self):
         self.count()
@@ -92,81 +84,89 @@ class FontColorForBackgroundDetectorService():
             print(bgr, value, ((float(value) / self.total_pixels) * 100))
 
     def detect(self):
-        # print("in detect")
         self.twenty_most_common()
-        self.percentage_of_first = (
-            float(self.number_counter[0][1]) / self.total_pixels)
-        print(self.percentage_of_first)
+        self.percentage_of_first = float(self.number_counter[0][1]) / self.total_pixels
         if self.percentage_of_first > 0.5:
             return self.number_counter[0][0]
         else:
             return self.average_colour()
-        
 
     def contrast_color(self):
-        # Extract RGB components from the input color
         color = self.detect()
-        print("color: ", color)
+        print("Detected color:", color)
         r, g, b = color
-        
-        # Calculate the perceptive luminance
         luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        print("\n\nlumnance: ", luminance)
-        # Determine the contrast color
-        if luminance > 0.3:
-            return (0, 0, 0)  # Black
-        else:
-            return (255, 255, 255)  # White
+        print("luminance: ", luminance)
+        return (0, 0, 0) if luminance > 0.028 else (255, 255, 255)
 
-
-
-class TextOverlay():         
+class TextOverlay():       
+    def wrap_text(self, draw, text, font, max_width):
+        print("in wrap text")
+        lines = []
+        words = text.split()
+        print("words: ", words)
+        
+        while words:
+            line = ""
+            while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+                line += words.pop(0) + " "
+            
+            # If there are no words left, add the current line and break
+            if not words:
+                lines.append(line.strip())
+                break
+            
+            # Check if the current word is too long to fit in an empty line
+            word = words.pop(0)
+            if draw.textbbox((0, 0), word, font=font)[2] > max_width:
+                # Hyphenate the word and add parts to lines
+                while word:
+                    for i in range(1, len(word) + 1):
+                        if draw.textbbox((0, 0), word[:i], font=font)[2] > max_width:
+                            lines.append(word[:i-1] + '-')
+                            word = word[i-1:]
+                            break
+                    else:
+                        lines.append(word)
+                        word = ""
+            else:
+                lines.append(line.strip())
+                lines.append(word)  
+        return lines
+        
     def text_overlay(self, illustrations):        
         counter = 0
         print("in text overlay")
         
         for illustration in illustrations:
             print("illustration: ", illustration)
-            image_id = illustration['id'] 
+            image_id = illustration.id
             print("image id: ", image_id)
-            image_url = illustration['image_url'] 
+            image_url = illustration.image_url # static
             print("image_urlL :", image_url)
-            text_to_be_overlayed = illustration['text'] 
+            text_to_be_overlayed = illustration.text # static
         
-            image = MediaUtils.download_image(image_url)
+        
+            image = self.download_image(image_url)
 
-            font_color_detector = FontColorForBackgroundDetectorService(image_url).contrast_color()
+            font_color_detector = FontColorForBackgroundDetectorService(image).contrast_color()
+
+            # font_color_detector = FontColorForBackgroundDetector(image_url).contrast_color()
             print("font_color: ", font_color_detector)
-            if font_color_detector == (0, 0, 0):
-                print("in black")
-                fill = '#000000'
-            else: 
-                print("in white")
-                fill = '#FFFFFF'
+            fill = '#000000' if font_color_detector == (0, 0, 0) else '#FFFFFF'
             
             font_path = os.getenv('FONT_PATH')
             font_size = 41
+            print("font size")
             font = ImageFont.truetype(font_path, font_size)
 
             draw = ImageDraw.Draw(image)
-
-            # Function to wrap text
-            def wrap_text(text, font, max_width):
-                lines = []
-                words = text.split()
-                while words:
-                    line = ""
-                    while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
-                        line += words.pop(0) + " "
-                    lines.append(line.strip())
-                return lines
-
+            print("draw")
+            print("out wrap text")
             # Set maximum width for wrapping
             max_text_width = image.width - 30  
-
-            # Wrap the text
-            wrapped_text_lines = wrap_text(text_to_be_overlayed, font, max_text_width)
-
+            wrapped_text_lines = self.wrap_text(draw, text_to_be_overlayed, font, max_text_width)
+            print("wrapped")
             # Calculate total height required for wrapped text
             total_text_height = sum(draw.textbbox((0, 0), line, font=font)[3] for line in wrapped_text_lines)
 
@@ -200,9 +200,8 @@ class TextOverlay():
             # Save the image to Cloudinary
             image_name = f"{image_id}_page{counter}_text"
             saved_img_url = MediaUtils.UploadMediaToCloud(image_bytes, 'text_overlay', image_name)
+            illustration.overlay_image_url = saved_img_url
+            illustration.save()
             print("img url: ", saved_img_url)
-
-            #update overlay_illustration_url
-            illustration['overlay_image_url'] = saved_img_url 
-
+        
         return illustrations
