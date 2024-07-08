@@ -140,14 +140,14 @@ class TextOverlay():
         
         for illustration in illustrations:
             print("illustration: ", illustration)
-            image_id = illustration.id
+            image_id = illustration['id']
             print("image id: ", image_id)
-            image_url = illustration.image_url # static
+            image_url = illustration['image_url']
             print("image_urlL :", image_url)
-            text_to_be_overlayed = illustration.text # static
+            text_to_be_overlayed = illustration['text']
         
         
-            image = self.download_image(image_url)
+            image = MediaUtils.download_image(image_url)
 
             font_color_detector = FontColorForBackgroundDetectorService(image).contrast_color()
 
@@ -200,8 +200,7 @@ class TextOverlay():
             # Save the image to Cloudinary
             image_name = f"{image_id}_page{counter}_text"
             saved_img_url = MediaUtils.UploadMediaToCloud(image_bytes, 'text_overlay', image_name)
-            illustration.overlay_image_url = saved_img_url
-            illustration.save()
             print("img url: ", saved_img_url)
+            illustration['overlay_image_url'] = saved_img_url
         
         return illustrations
