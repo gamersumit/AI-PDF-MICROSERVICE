@@ -91,7 +91,6 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'core.urls'
-AUTH_USER_MODEL = 'user.User'
 
 TEMPLATES = [
     {
