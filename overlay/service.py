@@ -137,6 +137,11 @@ class TextOverlay():
         font_path = os.getenv('FONT_PATH')  # Optional: specify a font
         font = ImageFont.truetype(font_path, size=20)  # Adjust size as needed
 
+        lines = self.wrap_text(draw=draw, font=font, max_width=image.width-30, text = text)
+        text = "\n".join(lines)
+
+        
+
         # Calculate text size and position
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]

@@ -44,16 +44,16 @@ class PDFUtils:
         self.height = height * 0.264583 
         self.title = title
 
-    def compress(self, pdf_bytes):
-        # Open the original PDF
-        pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
-        compressed_pdf_buffer = BytesIO()
+    # def compress(self, pdf_bytes):
+    #     # Open the original PDF
+    #     pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+    #     compressed_pdf_buffer = BytesIO()
 
-        # Save the PDF with a lower quality setting
-        pdf_document.save(compressed_pdf_buffer, garbage=3, deflate=True, clean=True)
-        compressed_pdf_buffer.seek(0)
+    #     # Save the PDF with a lower quality setting
+    #     pdf_document.save(compressed_pdf_buffer, garbage=3, deflate=True, clean=True)
+    #     compressed_pdf_buffer.seek(0)
 
-        return BytesIO(compressed_pdf_buffer.getvalue())
+    #     return BytesIO(compressed_pdf_buffer.getvalue())
     
     def add_title_page(self):
         # Add a blank page with a title
@@ -78,7 +78,8 @@ class PDFUtils:
         # Remove null bytes (if any)
         # pdf_bytes = pdf_bytes.replace(b'\x00', b'')
 
-        return self.compress(BytesIO(pdf_bytes))
+        # return self.compress(BytesIO(pdf_bytes))
+        return BytesIO(pdf_bytes)
     
 class Mail:
     
