@@ -103,35 +103,76 @@ class TextOverlay():
     def wrap_text(self, draw, text, font, max_width):
         print("in wrap text")
         lines = []
-        words = text.split()
-        print("words: ", words)
-        
-        while words:
-            line = ""
-            while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
-                line += words.pop(0) + " "
-            
-            # If there are no words left, add the current line and break
-            if not words:
-                lines.append(line.strip())
-                break
-            
-            # Check if the current word is too long to fit in an empty line
-            word = words.pop(0)
-            if draw.textbbox((0, 0), word, font=font)[2] > max_width:
-                # Hyphenate the word and add parts to lines
-                while word:
-                    for i in range(1, len(word) + 1):
-                        if draw.textbbox((0, 0), word[:i], font=font)[2] > max_width:
-                            lines.append(word[:i-1] + '-')
-                            word = word[i-1:]
-                            break
+        if '\\n' in text:  # Check for \n characters
+            print("'\n' present...")
+            paragraphs = text.split('\\n')  # Split text into paragraphs
+
+            for paragraph in paragraphs:
+                words = paragraph.split()
+                print("words: ", words)
+
+                while words:
+                    line = ""
+                    while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+                        line += words.pop(0) + " "
+
+                    # If there are no words left, add the current line and break
+                    if not words:
+                        lines.append(line.strip())
+                        break
+
+                    # Check if the current word is too long to fit in an empty line
+                    word = words.pop(0)
+                    if draw.textbbox((0, 0), word, font=font)[2] > max_width:
+                        # Hyphenate the word and add parts to lines
+                        while word:
+                            for i in range(1, len(word) + 1):
+                                if draw.textbbox((0, 0), word[:i], font=font)[2] > max_width:
+                                    lines.append(word[:i-1] + '-')
+                                    word = word[i-1:]
+                                    break
+                            else:
+                                lines.append(word)
+                                word = ""
                     else:
+                        lines.append(line.strip())
                         lines.append(word)
-                        word = ""
-            else:
-                lines.append(line.strip())
-                lines.append(word)  
+                lines.append("")  # Add a blank line between paragraphs
+
+            # Remove the last empty line added between paragraphs
+            if lines and lines[-1] == "":
+                lines.pop()
+        else:
+            print("no '\n' present...")
+            words = text.split()
+            print("words: ", words)
+
+            while words:
+                line = ""
+                while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+                    line += words.pop(0) + " "
+
+                # If there are no words left, add the current line and break
+                if not words:
+                    lines.append(line.strip())
+                    break
+
+                # Check if the current word is too long to fit in an empty line
+                word = words.pop(0)
+                if draw.textbbox((0, 0), word, font=font)[2] > max_width:
+                    # Hyphenate the word and add parts to lines
+                    while word:
+                        for i in range(1, len(word) + 1):
+                            if draw.textbbox((0, 0), word[:i], font=font)[2] > max_width:
+                                lines.append(word[:i-1] + '-')
+                                word = word[i-1:]
+                                break
+                        else:
+                            lines.append(word)
+                            word = ""
+                else:
+                    lines.append(line.strip())
+                    lines.append(word)
         return lines
         
     def text_overlay(self, illustrations):        
@@ -143,15 +184,13 @@ class TextOverlay():
             image_id = illustration['id']
             print("image id: ", image_id)
             image_url = illustration['image_url']
-            print("image_urlL :", image_url)
+            print("image_url: ", image_url)
             text_to_be_overlayed = illustration['text']
-        
-        
+
             image = MediaUtils.download_image(image_url)
 
             font_color_detector = FontColorForBackgroundDetectorService(image).contrast_color()
 
-            # font_color_detector = FontColorForBackgroundDetector(image_url).contrast_color()
             print("font_color: ", font_color_detector)
             fill = '#000000' if font_color_detector == (0, 0, 0) else '#FFFFFF'
             
@@ -162,7 +201,6 @@ class TextOverlay():
 
             draw = ImageDraw.Draw(image)
             print("draw")
-            print("out wrap text")
             # Set maximum width for wrapping
             max_text_width = image.width - 30  
             wrapped_text_lines = self.wrap_text(draw, text_to_be_overlayed, font, max_text_width)
@@ -175,29 +213,24 @@ class TextOverlay():
             # Calculate starting y position to center vertically
             y = fixed_y - total_text_height // 2
 
-            # Draw wrapped text with center alignment
             for line in wrapped_text_lines:
-                # Calculate width and height of the line of text
-                text_width, text_height = draw.textbbox((0, 0), line, font=font)[2:]
+                if line:  
+                    text_width, text_height = draw.textbbox((0, 0), line, font=font)[2:]
 
-                # Calculate starting x position to center align the line horizontally
-                x = (image.width - text_width) // 2
+                    # Calculate starting x position to center align the line horizontally
+                    x = (image.width - text_width) // 2
 
-                # Draw the line of text
-                draw.text((x, y), line, fill=fill, font=font)
+                    draw.text((x, y), line, fill=fill, font=font)
 
-                # Move to the next line vertically
-                y += text_height
+                    # Move to the next line vertically
+                    y += text_height
 
             print("done hai uye to")
             
-            # Save the image to a BytesIO object
             image_bytes = BytesIO()
             image.save(image_bytes, format='JPEG')
             image_bytes.seek(0)
             
-
-            # Save the image to Cloudinary
             image_name = f"{image_id}_page{counter}_text"
             saved_img_url = MediaUtils.UploadMediaToCloud(image_bytes, 'text_overlay', image_name)
             print("img url: ", saved_img_url)
