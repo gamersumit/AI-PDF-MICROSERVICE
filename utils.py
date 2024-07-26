@@ -15,7 +15,7 @@ class MediaUtils:
             path = f"story/{path}"
             print("path: ", path)  
             if path == "story/pdf" :
-                upload = cloudinary.uploader.upload(media, folder = path, public_id=image_name, use_filename = True, resource_type = "auto")
+                upload = cloudinary.uploader.upload_large(media, folder = path, public_id=image_name, use_filename = True, resource_type = "auto")
             
             else :
                 upload = cloudinary.uploader.upload_large(media, folder = path, public_id=image_name, use_filename = True)   

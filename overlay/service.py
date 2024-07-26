@@ -22,6 +22,14 @@ class PDFService:
             pdf.append_images_to_pdf([image])
         
         pdf = pdf.save()
+        
+        dir = '/home/sumit/Documents/GitHub/AI-PDF-MICROSERVICE/pdf'
+        file_path = os.path.join(dir, "filename.pdf")
+
+        # Write the PDF bytes to the file
+        with open(file_path, 'wb') as file:
+            file.write(pdf)
+
         return MediaUtils.UploadMediaToCloud(pdf, 'pdf', title.strip())
     
     @staticmethod
@@ -121,11 +129,9 @@ class TextOverlay():
 
     def overlay_with_background(self, image, text):
         print("start ===>")
-        # image_data = image.read()
-        print("type pf image ====>", type(image))
-        # image = Image.open(BytesIO(image))
         if image.mode != 'RGBA':
             image = image.convert('RGBA')
+
         txt_layer = Image.new('RGBA', image.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(txt_layer)
 
