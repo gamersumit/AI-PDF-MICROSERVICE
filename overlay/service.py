@@ -18,7 +18,7 @@ class PDFService:
         pdf = PDFUtils(title = title, width=image.width, height=image.height)
         pdf.add_title_page()
         
-        for i in range(0, 7) :
+        for i in range(0, 6) :
             illustration = illustrations[i]
             image = MediaUtils.download_image(image_url= illustration['overlay_image_url'])
             pdf.append_images_to_pdf([image])
@@ -106,7 +106,7 @@ class FontColorForBackgroundDetectorService:
 
 class TextOverlay(): 
     def overlay_illustrations(self, illustrations):
-        for i in range(0, 7):
+        for i in range(0, 6):
             illustration = illustrations[i]
             print("illustration: ", illustration)
             image_id = illustration['id']
