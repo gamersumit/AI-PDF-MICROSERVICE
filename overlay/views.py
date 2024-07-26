@@ -10,7 +10,8 @@ class TextOverlayAndPdfView(generics.CreateAPIView):
             story = request.data
             
             # start adding text overaly and update pdf url
-            story['pages'] = TextOverlay().text_overlay(story['pages'])
+            story['pages'] = TextOverlay().overlay_illustrations(story['pages'])
+            # story['pages'] = TextOverlay().text_overlay(story['pages'])
             
             #gnerate pdf
             pdf_url = PDFService.generate_pdf(

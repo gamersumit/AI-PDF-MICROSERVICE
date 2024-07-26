@@ -99,7 +99,73 @@ class FontColorForBackgroundDetectorService:
         print("luminance: ", luminance)
         return (0, 0, 0) if luminance > 0.028 else (255, 255, 255)
 
-class TextOverlay():       
+class TextOverlay(): 
+    def overlay_illustrations(self, illustrations):
+        for illustration in illustrations:
+            print("illustration: ", illustration)
+            image_id = illustration['id']
+            print("image id: ", image_id)
+            image_url = illustration['image_url']
+            print("image_url: ", image_url)
+            text_to_be_overlayed = illustration['text']
+            image = MediaUtils.download_image(image_url)
+
+            image_bytes = self.overlay_with_background(image=image, text=text_to_be_overlayed)
+            image_name = f"{image_id}_page{illustration['page_no']}_text"
+            saved_img_url = MediaUtils.UploadMediaToCloud(image_bytes, 'text_overlay', image_name)
+            print("img url: ", saved_img_url)
+            illustration['overlay_image_url'] = saved_img_url
+        
+        return illustrations
+
+
+    def overlay_with_background(self, image, text):
+        print("start ===>")
+        # image_data = image.read()
+        print("type pf image ====>", type(image))
+        # image = Image.open(BytesIO(image))
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+        txt_layer = Image.new('RGBA', image.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(txt_layer)
+
+        # Define text and font
+        font_path = '/home/sumit/Documents/GitHub/AI-Rich-APIs/BENG.TTF'  # Optional: specify a font
+        font = ImageFont.truetype(font_path, size=20)  # Adjust size as needed
+
+        # Calculate text size and position
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        x, y = 50, 50  # Adjust as needed
+
+        # Calculate dynamic position based on image size
+        image_width, image_height = image.size
+        margin = 30  # Adjust as needed
+        x = (image_width - text_width) / 2
+        y = image_height - text_height - margin
+
+        # Define the background box
+        box_padding = 10
+        box = [x - box_padding, y - box_padding, x + text_width + box_padding, y + text_height + box_padding]
+
+        # Draw the rounded rectangle
+        radius = 20  # Adjust as needed
+        draw.rounded_rectangle(box, radius=radius, fill=(255, 255, 255, 130))
+
+        # Draw the text on top of the box
+        draw.text((x, y), text, font=font, fill="black")  # Adjust fill color as needed
+
+        combined = Image.alpha_composite(image, txt_layer)
+        # Save to a BytesIO object
+        img_byte_arr = BytesIO()
+        combined.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+
+        # Return the image as HTTP response
+        return img_byte_arr
+
+
     def wrap_text(self, draw, text, font, max_width):
         print("in wrap text")
         lines = []
