@@ -1,3 +1,4 @@
+import time 
 import os
 import numpy as np
 import requests
@@ -17,20 +18,16 @@ class PDFService:
         pdf = PDFUtils(title = title, width=image.width, height=image.height)
         pdf.add_title_page()
         
-        for illustration in illustrations :
+        for i in range(0, 7) :
+            illustration = illustrations[i]
             image = MediaUtils.download_image(image_url= illustration['overlay_image_url'])
             pdf.append_images_to_pdf([image])
-        
-        pdf = pdf.save()
-        
-        dir = '/home/sumit/Documents/GitHub/AI-PDF-MICROSERVICE/pdf'
-        file_path = os.path.join(dir, "filename.pdf")
 
-        # Write the PDF bytes to the file
-        with open(file_path, 'wb') as file:
-            file.write(pdf)
+        pdf_bytes = pdf.save()
 
-        return MediaUtils.UploadMediaToCloud(pdf, 'pdf', title.strip())
+        print("calllling ---------------------------------------")
+        time.sleep(4)
+        return MediaUtils.UploadMediaToCloud(pdf_bytes, 'pdf', title.strip())
     
     @staticmethod
     def send_pdf_via_email(pdf_link, emails = ['devinnow8@gmail.com']):
@@ -109,7 +106,8 @@ class FontColorForBackgroundDetectorService:
 
 class TextOverlay(): 
     def overlay_illustrations(self, illustrations):
-        for illustration in illustrations:
+        for i in range(0, 7):
+            illustration = illustrations[i]
             print("illustration: ", illustration)
             image_id = illustration['id']
             print("image id: ", image_id)
@@ -123,7 +121,7 @@ class TextOverlay():
             saved_img_url = MediaUtils.UploadMediaToCloud(image_bytes, 'text_overlay', image_name)
             print("img url: ", saved_img_url)
             illustration['overlay_image_url'] = saved_img_url
-        
+
         return illustrations
 
 
@@ -136,7 +134,7 @@ class TextOverlay():
         draw = ImageDraw.Draw(txt_layer)
 
         # Define text and font
-        font_path = '/home/sumit/Documents/GitHub/AI-Rich-APIs/BENG.TTF'  # Optional: specify a font
+        font_path = os.getenv('FONT_PATH')  # Optional: specify a font
         font = ImageFont.truetype(font_path, size=20)  # Adjust size as needed
 
         # Calculate text size and position

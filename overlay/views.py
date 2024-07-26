@@ -1,3 +1,4 @@
+import time
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -12,7 +13,7 @@ class TextOverlayAndPdfView(generics.CreateAPIView):
             # start adding text overaly and update pdf url
             story['pages'] = TextOverlay().overlay_illustrations(story['pages'])
             # story['pages'] = TextOverlay().text_overlay(story['pages'])
-            
+    
             #gnerate pdf
             pdf_url = PDFService.generate_pdf(
                 illustrations=story['pages'],
