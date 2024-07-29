@@ -1,35 +1,32 @@
-import time 
 import os
-import numpy as np
-import requests
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
-import cv2
 from utils import Mail, MediaUtils, PDFUtils
-from collections import Counter
+
 
 
 class PDFService:
     @staticmethod
-    def generate_and_overlay_pdf(illustrations, title):
-        # fetch first image for the size reference
-        image = illustrations[0]
-        image = MediaUtils.download_image(image_url= image['image_url'])
-
-        # create a pdf object
-        pdf = PDFUtils(title = title, width=image.width, height=image.height)
-        pdf.add_title_page()
-
+    def generate_and_overlay_pdf(story):
         # text overlay object
         overlay = TextOverlay()
 
-        for illustration in illustrations :
+        # fetch first image for the size reference
+        cover = story['pages'][0]
+        image = MediaUtils.download_image(image_url= cover['image_url'])
+
+        # create a pdf object
+        pdf = PDFUtils(title = story['title'], image = image)
+        
+
+        for illustration in story['pages'][:6]:
             # downlaod image
             image = MediaUtils.download_image(image_url= illustration['image_url'])
             
-            # overlay text on the image
+            # overlay text on the image.,KIMJUNHBGVCX
             image_name = f"{illustration['id']}_page{illustration['page_no']}_text"
-            image = overlay.overlay_with_background(image = image, text = illustration['text'])
+            y_position, font_size = ('bottom', 20) if illustration['page_no'] else ('center', 30)
+            image = overlay.overlay_with_background(image = image, text = illustration['text'], y_axis=y_position, font_size=font_size)
 
             # upload the overlayed image to the cloudinary
             image_url = MediaUtils.UploadMediaToCloud(image, 'text_overlay', image_name)
@@ -42,8 +39,8 @@ class PDFService:
         
         #upload pdf to clodinary
         pdf_bytes = pdf.save()
-        return illustrations, MediaUtils.UploadMediaToCloud(pdf_bytes, 'pdf', title.strip())
-
+        story['pdf_url'] = MediaUtils.UploadMediaToCloud(pdf_bytes, 'pdf', story['title'].strip())
+        return story
     
     @staticmethod
     def send_pdf_via_email(pdf_link, emails = ['devinnow8@gmail.com']):
@@ -68,7 +65,17 @@ class PDFService:
 
 
 class TextOverlay(): 
-    def overlay_with_background(self, image, text):
+    def cal_position_in_y(self, image_height, text_height, y_axis):
+        y = image_height - text_height
+        if y_axis == 'center' :
+            return y/2
+        
+        if y_axis == 'bottom' :
+            return y - 30
+
+        return y - 30
+
+    def overlay_with_background(self, image, text, font_size = 20, y_axis = 'bottom'):
         print("start ===>")
         if image.mode != 'RGBA':
             image = image.convert('RGBA')
@@ -78,7 +85,7 @@ class TextOverlay():
 
         # Define text and font
         font_path = os.getenv('FONT_PATH')  # Optional: specify a font
-        font = ImageFont.truetype(font_path, size=20)  # Adjust size as needed
+        font = ImageFont.truetype(font_path, size=font_size)  # Adjust size as needed
 
         lines = self.wrap_text(
             draw=draw, 
@@ -95,13 +102,11 @@ class TextOverlay():
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
-        x, y = 50, 50  # Adjust as needed
-
+        
         # Calculate dynamic position based on image size
         image_width, image_height = image.size
-        margin = 30  # Adjust as needed
         x = (image_width - text_width) / 2
-        y = image_height - text_height - margin
+        y = self.cal_position_in_y(image_height=image_height, text_height=text_height, y_axis=y_axis)
 
         # Define the background box
         box_padding = 10

@@ -123,6 +123,7 @@ celerybeat.pid
 
 # Environments
 .env
+ai-book-428212-firebase-adminsdk-9vd5d-f734ffb71f.json
 .venv
 env
 venv

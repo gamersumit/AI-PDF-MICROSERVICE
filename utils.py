@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import requests
 from PIL import Image
-import fitz
+
 class MediaUtils:  
     @staticmethod
     def UploadMediaToCloud(media, path, image_name):
@@ -38,30 +38,24 @@ class MediaUtils:
 
 class PDFUtils:
 
-    def __init__(self, title, width, height):
+    def __init__(self, title, image):
         self.pdf = FPDF()
-        self.width = width * 0.264583  
-        self.height = height * 0.264583 
+        self.width = image.width * 0.264583  
+        self.height = image.height * 0.264583 
         self.title = title
-
-    # def compress(self, pdf_bytes):
-    #     # Open the original PDF
-    #     pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
-    #     compressed_pdf_buffer = BytesIO()
-
-    #     # Save the PDF with a lower quality setting
-    #     pdf_document.save(compressed_pdf_buffer, garbage=3, deflate=True, clean=True)
-    #     compressed_pdf_buffer.seek(0)
-
-    #     return BytesIO(compressed_pdf_buffer.getvalue())
     
-    def add_title_page(self):
-        # Add a blank page with a title
-        self.pdf.add_page(format=(self.width, self.height))
-        self.pdf.set_font("Arial", 'B', 24)
-        self.pdf.set_xy(0, self.pdf.h / 2)
-        self.pdf.cell(w=self.pdf.w, h=0, txt=self.title, border=0, ln=0, align='C')    
-    
+    # def add_cover_page(self, image):
+    #     overlay =   TextOverlay()
+    #     image = overlay.overlay_with_background(image = image, text=self.title, y_axis='center')
+    #     # upload the overlayed image to the cloudinary
+    #     image_name = self.title+"_cover"
+    #     image_url = MediaUtils.UploadMediaToCloud(image, 'text_overlay', image_name)
+        
+    #     # append the image to pdf
+    #     self.append_images_to_pdf([image])
+
+    #     return image_url
+
     def append_images_to_pdf(self, images):
         # imagelist is the list with all image filenames
         for image in images:
