@@ -9,18 +9,9 @@ class TextOverlayAndPdfView(generics.CreateAPIView):
     def post(self, request):
         try :
             story = request.data
-            
-            # start adding text overaly and update pdf url
-            story['pages'] = TextOverlay().overlay_illustrations(story['pages'])
-            # story['pages'] = TextOverlay().text_overlay(story['pages'])
-    
-            #gnerate pdf
-            pdf_url = PDFService.generate_pdf(
-                illustrations=story['pages'],
-                title=story['title'],
-                )
-            
+            pages, pdf_url = PDFService.generate_and_overlay_pdf(illustrations=story['pages'], title=story['title'])
             # update pdf_url
+            story['pages'] = pages
             story['pdf_url'] = pdf_url
 
             # send_pdf_via_email(pdf_link=url, emails=[request.user.email]) 
