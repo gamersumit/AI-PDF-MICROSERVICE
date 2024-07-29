@@ -1,7 +1,7 @@
 import os
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
-from utils import Mail, MediaUtils, PDFUtils
+from utils import FirebaseMediaUtils, Mail, MediaUtils, PDFUtils
 
 
 
@@ -18,8 +18,8 @@ class PDFService:
         # create a pdf object
         pdf = PDFUtils(title = story['title'], image = image)
         
-
-        for illustration in story['pages'][:6]:
+        print("pages length ==============>", len(story['pages']))
+        for illustration in story['pages']:
             # downlaod image
             image = MediaUtils.download_image(image_url= illustration['image_url'])
             
@@ -39,7 +39,7 @@ class PDFService:
         
         #upload pdf to clodinary
         pdf_bytes = pdf.save()
-        story['pdf_url'] = MediaUtils.UploadMediaToCloud(pdf_bytes, 'pdf', story['title'].strip())
+        story['pdf_url'] = FirebaseMediaUtils.upload_media_to_firebase(pdf_bytes, 'pdf', story['title'].strip())
         return story
     
     @staticmethod

@@ -6,6 +6,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 import requests
 from PIL import Image
+import firebase_config
+from firebase_admin import storage
+from django.core.files.base import ContentFile
 
 class MediaUtils:  
     @staticmethod
@@ -91,3 +94,23 @@ class Mail:
             settings.EMAIL_HOST_USER,
             self.emails,
             fail_silently=False)
+        
+
+class FirebaseMediaUtils:
+    @staticmethod
+    def upload_media_to_firebase(media, path, image_name):
+        try:
+            print("in upload media to firebase")
+            bucket = storage.bucket()
+            print("bucket... ", bucket)
+            blob = bucket.blob(f"{path}/{image_name}")
+            print("blob...", blob)
+            blob.upload_from_string(media.read(),  content_type='application/pdf')
+            print("one...")
+            blob.make_public()
+            print("two... ")
+            print("url:::::::::: ", blob.public_url)
+            return blob.public_url
+        except Exception as e:
+
+            raise Exception(str(e))
