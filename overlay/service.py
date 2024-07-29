@@ -23,8 +23,7 @@ class PDFService:
         # text overlay object
         overlay = TextOverlay()
 
-        for i in range(0, 6):
-            illustration = illustrations[i]
+        for llustration in illustrations :
             # downlaod image
             image = MediaUtils.download_image(image_url= illustration['image_url'])
             
