@@ -18,6 +18,7 @@ class PDFService:
         pdf = PDFUtils(title = story['title'], image = image)
         
         print("pages length ==============>", len(story['pages']))
+        counter =0
         for illustration in story['pages']:
             # downlaod image
             image = MediaUtils.download_image(image_url= illustration['image_url'])
@@ -32,13 +33,19 @@ class PDFService:
             image_name = f"{illustration['id']}_page{illustration['page_no']}_text"
 
             # upload the overlayed image to the cloudinary
-            image_url = MediaUtils.UploadMediaToCloud(image, 'text_overlay', image_name)
-            
+            # image_url = MediaUtils.UploadMediaToCloud(image, 'text_overlay', image_name)
+            image_url = FirebaseMediaUtils.upload_media_to_firebase(image, 'text_overlay', image_name)
             # append the image to pdf
+            print("\n\nuploaded image url:::::::::::::: ", image_url)
             pdf.append_images_to_pdf([image])
             
             # update overlayed image url in illustration
             illustration['overlay_image_url'] = image_url
+        
+        thank_you_image = os.getenv('THANK_YOU_IMAGE')
+        print("thank you url: ", thank_you_image)
+        pdf.append_images_to_pdf([thank_you_image])
+        print("added")
         
         #upload pdf to clodinary
         pdf_bytes = pdf.save()
@@ -47,6 +54,13 @@ class PDFService:
         story['pdf_url'] = FirebaseMediaUtils.upload_media_to_firebase(pdf_bytes, 'pdf', pdf_name)
         return story
     
+    
+    
+    @staticmethod
+    def thank_you_page(book_ratio, size):
+        image_url = 'https://res.cloudinary.com/doxio9q0g/image/upload/v1722315034/story/static/dnoeupmgvm0ixt8otjtg.jpg'
+        return image_url
+        
     @staticmethod
     def send_pdf_via_email(pdf_link, emails = ['devinnow8@gmail.com']):
         subject = f"Your Requested Story Book PDF"
