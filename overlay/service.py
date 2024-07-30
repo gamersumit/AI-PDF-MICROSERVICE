@@ -2,7 +2,7 @@ import os
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 from utils import FirebaseMediaUtils, Mail, MediaUtils, PDFUtils
-
+import time
 
 
 class PDFService:
@@ -14,7 +14,6 @@ class PDFService:
         # fetch first image for the size reference
         cover = story['pages'][0]
         image = MediaUtils.download_image(image_url= cover['image_url'])
-
         # create a pdf object
         pdf = PDFUtils(title = story['title'], image = image)
         
@@ -23,10 +22,14 @@ class PDFService:
             # downlaod image
             image = MediaUtils.download_image(image_url= illustration['image_url'])
             
-            # overlay text on the image.,KIMJUNHBGVCX
-            image_name = f"{illustration['id']}_page{illustration['page_no']}_text"
+            # for cover page
             y_position, font_size = ('bottom', 20) if illustration['page_no'] else ('center', 30)
+            
+            # overlay image
             image = overlay.overlay_with_background(image = image, text = illustration['text'], y_axis=y_position, font_size=font_size)
+            
+            # image name to be saved on cloudinary
+            image_name = f"{illustration['id']}_page{illustration['page_no']}_text"
 
             # upload the overlayed image to the cloudinary
             image_url = MediaUtils.UploadMediaToCloud(image, 'text_overlay', image_name)
@@ -39,7 +42,9 @@ class PDFService:
         
         #upload pdf to clodinary
         pdf_bytes = pdf.save()
-        story['pdf_url'] = FirebaseMediaUtils.upload_media_to_firebase(pdf_bytes, 'pdf', story['title'].strip())
+        pdf_name = f"{story['title'].strip()}_{int(time.time())}"
+        print("pdf_name ====>", pdf_name)
+        story['pdf_url'] = FirebaseMediaUtils.upload_media_to_firebase(pdf_bytes, 'pdf', pdf_name)
         return story
     
     @staticmethod

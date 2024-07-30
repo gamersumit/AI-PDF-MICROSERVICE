@@ -112,5 +112,5 @@ class FirebaseMediaUtils:
             print("url:::::::::: ", blob.public_url)
             return blob.public_url
         except Exception as e:
-
+            print("EXCEPTION IN FIREBASE UPLOAD ===>", str(e))
             raise Exception(str(e))
