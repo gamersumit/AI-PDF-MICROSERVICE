@@ -23,7 +23,7 @@ class PDFService:
             image = MediaUtils.download_image(image_url= illustration['image_url'])
             
             # for cover page
-            y_position, font_size = ('bottom', 20) if illustration['page_no'] else ('center', 30)
+            y_position, font_size = ('bottom', 20) if illustration['page_no'] else ('top', 40)
             
             # overlay image
             image = overlay.overlay_with_background(image = image, text = illustration['text'], y_axis=y_position, font_size=font_size)
@@ -78,9 +78,12 @@ class TextOverlay():
         y = image_height - text_height
         if y_axis == 'center' :
             return y/2
-        
+
+        if y_axis == 'top' :
+            return 50
+
         if y_axis == 'bottom' :
-            return y - 30
+            return y - 50
 
         return y - 30
 
